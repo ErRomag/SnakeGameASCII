@@ -6,12 +6,9 @@
 #include <chrono>
 #include <thread>
 
-
-
 struct Coordinate {
     Coordinate() : x(0), y(0) {}
-    Coordinate(const int32_t new_x,
-               const int32_t new_y) :
+    Coordinate(const int32_t new_x, const int32_t new_y) :
         x(new_x), y(new_y) {}
 
     int32_t x;
@@ -33,7 +30,7 @@ public:
         }
     }
 
-    const char Symbol() const {
+     char Symbol() const {
         return object_symbol;
     }
 
@@ -47,6 +44,14 @@ public:
             throw std::range_error("Object position not set");
         }
         return position;
+    }
+
+    Coordinate& operator[](const size_t index) {
+        return position[index];
+    }
+
+    const Coordinate& operator[](const size_t index) const {
+        return position.at(index);
     }
 
 protected:
@@ -68,7 +73,7 @@ public:
         GameObject(symbol, x, y) {}
 };
 
-enum Actions {Stop, Up, Down, Left, Right};
+enum Actions {Unknown, Stop, Up, Down, Left, Right};
 
 Actions DirectionFromChar(const char c)
 {
@@ -87,6 +92,7 @@ Actions DirectionFromChar(const char c)
     default:
         std::cout << "Error convert from input symbol to enum" << std::endl;
     }
+    return Unknown;
 }
 
 class MovableObject : public GameObject
@@ -112,43 +118,36 @@ public:
     void Move(const Actions direction)
     {
         last_action = direction;
+
+        for(size_t i = position.size() - 1; i > 0; --i) {
+            position[i] = position[i - 1];
+        }
+
         switch (direction)
         {
         case Up:
         {
-            for(size_t i = position.size() - 1; i > 0; --i) {
-                position[i] = position[i - 1];
-            }
-            position[0].y--;
+            Head().y--;
             break;
         }
         case Down:
         {
-            for(size_t i = position.size() - 1; i > 0; --i) {
-                position[i] = position[i - 1];
-            }
-            position[0].y++;
+            Head().y++;
             break;
         }
         case Left:
         {
-            for(size_t i = position.size() - 1; i > 0; --i) {
-                position[i] = position[i - 1];
-            }
-            position[0].x--;
+            Head().x--;
             if(last_action != Left) {
-                position[0].y--;
+                Head().y--;
             }
             break;
         }
         case Right:
         {
-            for(size_t i = position.size() - 1; i > 0; --i) {
-                position[i] = position[i - 1];
-            }
-            position[0].x++;
+            Head().x++;
             if(last_action != Right) {
-                position[0].y++;
+                Head().y++;
             }
             break;
         }
@@ -157,13 +156,11 @@ public:
         }
     }
 
-    bool HasHeadCollision(const GameObject& obj) const {
-        for(const Coordinate& coord : obj.Position()) {
-            if(coord.x == position[0].x && coord.y == position[0].y) {
-                return true;
-            }
-        }
-        return false;
+    const Coordinate& Head() const {
+        return position[0];
+    }
+    Coordinate& Head() {
+        return position[0];
     }
 
     void AddPart(const Coordinate& new_head)
@@ -251,38 +248,40 @@ public:
         while(!is_over)
         {
             Draw();
-            Input();
-            ProcessAction(one_dim_obj);
+            ProcessAction(Input());
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-
-        system("clear");
-        std::cout << "Game Over" << std::endl;
+        DrawGameOverScreen();
     }
 
-    void Input()
+    Actions Input() const
     {
         if (std::cin.peek() != '\\n') {
             char input_symbol;
             std::cin >> input_symbol;
-            curr_action = DirectionFromChar(input_symbol);
+            return DirectionFromChar(input_symbol);
         }
+        return Unknown;
     }
 
-    void ProcessAction(const GameObject& obj)
+    void ProcessAction(const Actions action)
     {
-        if(curr_action == Actions::Stop) {
+        if(action == Unknown){
+            return;
+        }
+
+        if(action == Actions::Stop) {
             is_over = true;
             return;
         }
 
-        snake.Move(curr_action);
+        snake.Move(action);
         if(HasBorderCollision(snake)) {
             is_over = true;
             return;
         }
 
-        if(snake.HasHeadCollision(fruit)) {
+        if(HasObjectsCollision(snake, fruit)) {
             score += 10;
             snake.AddPart(fruit.Position().at(0));
             do {
@@ -291,38 +290,35 @@ public:
         }
     }
 
-    /*
-            std::vector<Coordinate> prev_position = obj.Position();
-            one_dim_obj.Move(curr_action);
-            if(HasBorderCollision(one_dim_obj)) {
-                //is_over = true;  // если нужно закончить игру
-                one_dim_obj.SetPosition(prev_position);
-            }
-
-            if(HasObjectsCollision(one_dim_obj, fruit)) {
-                score += 10;
-                SetRandomPosition(fruit);
-            }
-            */
-
+    bool HasBorderCollision(const Coordinate& coord) const
+    {
+        if(coord.x < 0 || coord. x > static_cast<int32_t>(width - 1) ||
+                coord.y < 0 || coord.y > static_cast<int32_t>(height - 1)) {
+            return true;
+        }
+        return false;
+    }
 
     bool HasBorderCollision(const GameObject& obj) const
     {
         for(const Coordinate& coord : obj.Position()) {
-            if(coord.x < 0 || coord. x > width - 1 ||
-                    coord.y < 0 || coord.y > height - 1) {
+            if(HasBorderCollision(coord)){
                 return true;
             }
         }
         return false;
     }
 
+    bool HasObjectsCollision(const Coordinate& lhs, const Coordinate& rhs) const
+    {
+        return lhs.x == rhs.x && lhs.y == rhs.y ? true : false;
+    }
+
     bool HasObjectsCollision(const GameObject& obj_1, const GameObject& obj_2) const
     {
         for(const Coordinate& coord_obj_1 : obj_1.Position()) {
             for(const Coordinate& coord_obj_2 : obj_2.Position()) {
-                if(coord_obj_1.x == coord_obj_2.x &&
-                        coord_obj_1.y == coord_obj_2.y) {
+                if(HasObjectsCollision(coord_obj_1, coord_obj_2)) {
                     return true;
                 }
             }
@@ -367,7 +363,7 @@ public:
                     std::cout << ' ';
                 }
             }
-            std::cout << std::endl;
+            std::cout << "\n";
         }
         std::cout << "Snake" << std::endl;
         PrintObjectCoordinate(snake);
@@ -376,10 +372,16 @@ public:
         std::cout << "Score: " << score << std::endl;
     }
 
+    void DrawGameOverScreen() const
+    {
+        system("clear");
+        std::cout << "****** GAME OVER ******" << std::endl;
+        std::cout << "****** SCORE " << score << " ******" << std::endl;
+    }
+
 private:
     bool is_over;
     uint32_t width, height;
-    Actions curr_action;
     OneDimensionObject one_dim_obj;
     Eat fruit;
     Snake snake;
