@@ -1,10 +1,10 @@
+#include <vector>
+#include <chrono>
+#include <thread>
 #include <iostream>
 #include <stdint.h>
 #include <stdlib.h>
 #include <exception>
-#include <vector>
-#include <chrono>
-#include <thread>
 
 struct Coordinate {
     Coordinate() : x(0), y(0) {}
@@ -14,6 +14,11 @@ struct Coordinate {
     int32_t x;
     int32_t y;
 };
+
+std::ostream& operator<<(std::ostream& os, const Coordinate& rhs)
+{
+    return os << "x: " << rhs.x << " y: " << rhs.y << std::endl;
+}
 
 class GameObject
 {
@@ -30,7 +35,7 @@ public:
         }
     }
 
-     char Symbol() const {
+    char Symbol() const {
         return object_symbol;
     }
 
@@ -59,10 +64,12 @@ protected:
     std::vector<Coordinate> position;
 };
 
-void PrintObjectCoordinate(const GameObject& obj) {
-    for(const Coordinate& coord : obj.Position()) {
-        std::cout << "x: " << coord.x << " y: " << coord.y << std::endl;
+std::ostream& operator<<(std::ostream& os, const GameObject& rhs)
+{
+    for(const Coordinate& coord : rhs.Position()){
+        os << coord << "\n";
     }
+    return os;
 }
 
 class StaticObject : public GameObject
@@ -118,6 +125,7 @@ public:
     void Move(const Actions direction)
     {
         last_action = direction;
+        tail_coordinate = position.back();
 
         for(size_t i = position.size() - 1; i > 0; --i) {
             position[i] = position[i - 1];
@@ -159,59 +167,19 @@ public:
     const Coordinate& Head() const {
         return position[0];
     }
+
     Coordinate& Head() {
         return position[0];
     }
 
-    void AddPart(const Coordinate& new_head)
+    void Grow()
     {
-        std::cout << "new_head " <<new_head.x<<new_head.y<<std::endl;
-        position.push_back(Coordinate());
-        for(size_t i = position.size() - 1; i > 0; --i) {
-            position[i] = position[i - 1];
-        }
-        position[0] = new_head;
+        position.push_back(tail_coordinate);
     }
 
 private:
     Actions last_action;
-};
-
-class OneDimensionObject : public MovableObject
-{
-public:
-    OneDimensionObject() : MovableObject('M', 0, 0) {}
-    OneDimensionObject(const int32_t x, const int32_t y) :
-        MovableObject('M', x, y) {}
-
-    void Move(const Actions direction)
-    {
-        switch (direction)
-        {
-        case Up:
-        {
-            position[0].y--;
-            break;
-        }
-        case Down:
-        {
-            position[0].y++;
-            break;
-        }
-        case Left:
-        {
-            position[0].x--;
-            break;
-        }
-        case Right:
-        {
-            position[0].x++;
-            break;
-        }
-        default:
-            throw std::runtime_error("Unknown move direction for OneDimensionObject");
-        }
-    }
+    Coordinate tail_coordinate;
 };
 
 class Eat : public StaticObject
@@ -249,7 +217,7 @@ public:
         {
             Draw();
             ProcessAction(Input());
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         DrawGameOverScreen();
     }
@@ -266,7 +234,7 @@ public:
 
     void ProcessAction(const Actions action)
     {
-        if(action == Unknown){
+        if(action == Unknown) {
             return;
         }
 
@@ -276,14 +244,14 @@ public:
         }
 
         snake.Move(action);
-        if(HasBorderCollision(snake)) {
+        if(HasBorderCollision(snake.Head())) {
             is_over = true;
             return;
         }
 
-        if(HasObjectsCollision(snake, fruit)) {
+        if(HasObjectsCollision(snake.Head(), fruit.Position().at(0))) {
             score += 10;
-            snake.AddPart(fruit.Position().at(0));
+            snake.Grow();
             do {
                 SetRandomPosition(fruit);
             } while(HasObjectsCollision(fruit, snake));
@@ -302,7 +270,7 @@ public:
     bool HasBorderCollision(const GameObject& obj) const
     {
         for(const Coordinate& coord : obj.Position()) {
-            if(HasBorderCollision(coord)){
+            if(HasBorderCollision(coord)) {
                 return true;
             }
         }
@@ -365,10 +333,10 @@ public:
             }
             std::cout << "\n";
         }
-        std::cout << "Snake" << std::endl;
-        PrintObjectCoordinate(snake);
-        std::cout << "Fruit" << std::endl;
-        PrintObjectCoordinate(fruit);
+        //std::cout << "Snake" << std::endl;
+        //PrintObjectCoordinate(snake);
+        //std::cout << "Fruit" << std::endl;
+        //PrintObjectCoordinate(fruit);
         std::cout << "Score: " << score << std::endl;
     }
 
@@ -382,7 +350,6 @@ public:
 private:
     bool is_over;
     uint32_t width, height;
-    OneDimensionObject one_dim_obj;
     Eat fruit;
     Snake snake;
     uint32_t score;
