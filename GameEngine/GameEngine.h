@@ -26,9 +26,6 @@ private:
     void HasCollision();
     void DrawField() const;
     void DrawGameOverScreen() const;
-
-    Key KeyFromChar(const char input_char);
-    Direction DirectionFromKey(const Key key);
 };
 
 #endif // GAMEENGINE_H

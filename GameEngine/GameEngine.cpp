@@ -117,29 +117,3 @@ void GameEngine::HasCollision()
 
     }
 }
-
-
-Key GameEngine::KeyFromChar(const char input_char)
-{
-    switch (input_char) {
-        case 'q': return Key::Q;
-        case 'w': return Key::W;
-        case 'a': return Key::A;
-        case 's': return Key::S;
-        case 'd': return Key::D;
-        default:  throw std::logic_error("Unknown input char");
-    }
-}
-
-Direction GameEngine::DirectionFromKey(const Key key)
-{
-    switch(key)
-    {
-        case Key::W: return Up;
-        case Key::S: return Down;
-        case Key::A: return Left;
-        case Key::D: return Right;
-        default:  throw std::logic_error("Unknown direction");
-    }
-}
-
