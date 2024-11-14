@@ -13,6 +13,8 @@ public:
     explicit AbsObject(const char symbol, const T& pos) :
         _symbol(symbol), _position(pos) {}
 
+    virtual ~AbsObject() {}
+
     char Symbol() const noexcept{
         return _symbol;
     }

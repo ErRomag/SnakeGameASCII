@@ -13,26 +13,26 @@ struct Point
     int32_t x;
     int32_t y;
 };
-/*
-std::ostream& operator<<(std::ostream& os, const Point& rhs){
+
+inline std::ostream& operator<<(std::ostream& os, const Point& rhs){
     return os << "x: " << rhs.x << " y: " << rhs.y << std::endl;
 }
 
-Point operator+(const Point& lhs, const Point& rhs){
+inline Point operator+(const Point& lhs, const Point& rhs){
     return Point(lhs.x + rhs.x, lhs.y + rhs.y);
 }
 
-Point operator-(const Point& lhs, const Point& rhs){
+inline Point operator-(const Point& lhs, const Point& rhs){
     return Point(lhs.x - rhs.x, lhs.y - rhs.y);
 }
-*/
+
 using Coordinates = std::vector<Point>;
-/*
-std::ostream& operator<<(std::ostream& os, const Coordinates& coord){
+
+inline std::ostream& operator<<(std::ostream& os, const Coordinates& coord){
     for(const Point& p : coord){
         os << p;
     }
     return os;
 }
-*/
+
 #endif // POINT_H

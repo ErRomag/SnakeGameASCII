@@ -17,15 +17,16 @@ private:
     Eat eat;
     Snake snake;
     bool is_over;
-    int32_t score;
+    uint32_t score;
     int32_t field_width;
-    uint32_t field_height;
+    int32_t field_height;
     ObjectGenerator objectGen;
 
     void ProcessKey();
     void HasCollision();
     void DrawField() const;
     void DrawGameOverScreen() const;
+    void InitObjects();
 };
 
 #endif // GAMEENGINE_H
