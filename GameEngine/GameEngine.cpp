@@ -9,38 +9,55 @@ GameEngine::GameEngine(const int32_t width, const int32_t height) :
     is_over(false),
     score(0),
     field_width(width),
-    field_height(height)
+    field_height(height),
+    ready(false)
 {
     InitObjects();
 }
 
 GameEngine::~GameEngine()
 {
-    is_over = true;
+
 }
 
 void GameEngine::Run()
 {
-    const int64_t draw_delay = 10;
+    DrawField();
 
-    while(!is_over)
+    std::thread displayThread(&GameEngine::Display, this);
+    std::thread inputThread(&GameEngine::ProcessKey, this);
+
+    displayThread.join();
+    inputThread.join();
+}
+
+void GameEngine::Display()
+{
+    const int64_t draw_delay = 500;
+
+    while (!is_over)
     {
         DrawField();
-        ProcessKey();
-        HasCollision();
+        ProcessCollision();
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            snake.Move(last_dir);
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(draw_delay));
     }
+
     DrawGameOverScreen();
 }
 
 void GameEngine::DrawField() const
 {
     system("clear");
-    bool is_space_print;
-    bool is_head_print = false;
-    for(int32_t h = 0; h < field_height + 2; ++h) {
-        for(int32_t w = 0; w < field_width + 2; ++w) {
 
+    bool is_space_print;
+    for(int32_t h = 0; h < field_height + 2; ++h)
+    {
+        for(int32_t w = 0; w < field_width + 2; ++w)
+        {
             is_space_print = true;
             if((w == 0) || (w == field_width + 1) ||
                     (h == 0) || (h == field_height + 1)) {
@@ -53,21 +70,6 @@ void GameEngine::DrawField() const
                 std::cout << eat.Symbol();
                 continue;
             }
-
-//            if((w - 1 == snake.Head().x) &&
-//                    (h - 1 == snake.Head().y)) {
-//                std::cout << 'H';
-//                is_head_print = true;
-//                continue;
-//            }
-//            for(int i = 0; i < snake.Coordinate().size(); ++i){
-//                if(is_head_print)continue;
-//                if((w - 1 == snake.Coordinate().at(i).x) && (h - 1 == snake.Coordinate().at(i).y)) {
-//                    std::cout << snake.Symbol();
-//                    is_space_print = false;
-//                }
-//                continue;
-//            }
 
             for(const Point& coord : snake.Coordinate()) {
                 if((w - 1 == coord.x) && (h - 1 == coord.y)) {
@@ -102,42 +104,58 @@ void GameEngine::InitObjects()
     objectGen.Init(field_width, field_height);
 
     objectGen.CreateObject<Coordinates>(snake);
-
     do{
         objectGen.CreateObject<Point>(eat);
     } while(CollisionChecker::HasObjectsCollision(snake.Coordinate(), eat.Coordinate()));
+
+    last_dir = objectGen.MakeRandomDir();
 }
 
 void GameEngine::ProcessKey()
 {
-    if (std::cin.peek() == '\\n') {
-        return;
-    }
-
     char input_symbol;
-    std::cin >> input_symbol;
-
-    Key pressed_key = KeyFromChar(input_symbol);
-
-    switch (pressed_key)
+    while (!is_over)
     {
-    case Key::Q: {is_over = true; break;}
-    case Key::W:
-    case Key::A:
-    case Key::S:
-    case Key::D: snake.Move(DirectionFromKey(pressed_key));
+        std::cin >> input_symbol;
+        Direction curr_dir = Left;
+
+        Key pressed_key = KeyFromChar(input_symbol);
+        switch (pressed_key)
+        {
+            case Key::Q: {is_over = true; break;}
+            case Key::W:
+            case Key::A:
+            case Key::S:
+            case Key::D: {
+                try {
+                    curr_dir = DirectionFromKey(pressed_key);
+                } catch (std::logic_error) {
+                    std::cout << "Unknown direction" << std::endl;
+                }
+                break;
+            }
+            default: continue;
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            last_dir = curr_dir;
+        }
     }
 }
 
-void GameEngine::HasCollision()
+void GameEngine::ProcessCollision()
 {
+    const uint32_t score_step = 10;
+
     if(CollisionChecker::HasBorderCollision(snake.Head(), field_width, field_height)) {
+        std::lock_guard<std::mutex> lock(mtx);
         is_over = true;
         return;
     }
 
     if(CollisionChecker::HasObjectsCollision(snake.Head(), eat.Coordinate())) {
-        score += 10;
+        score += score_step;
         snake.Grow();
         do{
             objectGen.CreateObject<Point>(eat);

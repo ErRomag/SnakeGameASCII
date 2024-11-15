@@ -3,8 +3,8 @@
 
 int main()
 {
-    int32_t field_width = 10;
-    int32_t field_height = 10;
+    int32_t field_width = 40;
+    int32_t field_height = 20;
 
     GameEngine engine(field_width, field_height);
     engine.Run();

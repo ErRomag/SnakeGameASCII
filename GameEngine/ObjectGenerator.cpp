@@ -25,47 +25,47 @@ void ObjectGenerator::Init(const int32_t width, const int32_t height)
 
 void ObjectGenerator::MakeEat(Eat &eat)
 {
-    Point pos(std::rand() % field_width, std::rand() % field_height);
-
-    eat.SetPosition(pos);
+    eat.SetPosition(Point(std::rand() % field_width, std::rand() % field_height));
 }
 
 void ObjectGenerator::MakeSnake(Snake& object)
 {
-    const uint32_t body_count = 2;
+    const uint32_t snake_lenght = 2;
 
     Coordinates body_coordinate;
 
-    Point head(std::rand() % (field_width - body_count - 2) ,
-               std::rand() % (field_height - body_count - 2));
-
+    Point head(Point(std::rand() % field_width, std::rand() % field_height));
     body_coordinate.push_back(head);
 
-    Direction tail_dir = static_cast<Direction>(std::rand() % All_Directions.size() - 1);
-    for(uint32_t i = 0; i < body_count; ++i)
+    for(uint32_t i = 0; i < snake_lenght - 1; ++i)
     {
         Point tail;
-        switch (tail_dir)
+        switch (MakeRandomDir())
         {
             case Direction::Up: {
-            tail = Point(body_coordinate.back().x, --body_coordinate.back().y);
-            break;
-        }
-        case Direction::Down: {
-            tail = Point(body_coordinate.back().x, ++body_coordinate.back().y);
-            break;
-        }
-        case Direction::Left: {
-            tail = Point(--body_coordinate.back().x, body_coordinate.back().y);
-            break;
-        }
-        case Direction::Right: {
-            tail = Point(++body_coordinate.back().x, body_coordinate.back().y);
-            break;
-        }
+                tail = Point(body_coordinate.back().x, --body_coordinate.back().y);
+                break;
+            }
+            case Direction::Down: {
+                tail = Point(body_coordinate.back().x, ++body_coordinate.back().y);
+                break;
+            }
+            case Direction::Left: {
+                tail = Point(--body_coordinate.back().x, body_coordinate.back().y);
+                break;
+            }
+            case Direction::Right: {
+                tail = Point(++body_coordinate.back().x, body_coordinate.back().y);
+                break;
+            }
         }
         body_coordinate.push_back(tail);
     }
 
     object.SetPosition(body_coordinate);
+}
+
+Direction ObjectGenerator::MakeRandomDir()
+{
+    return static_cast<Direction>(std::rand() % All_Directions.size() - 1);
 }

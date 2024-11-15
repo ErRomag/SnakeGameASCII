@@ -19,13 +19,14 @@ public:
     template<typename T>
     void CreateObject(AbsObject<T>& object);
 
+    Direction MakeRandomDir();
+
 private:
     int32_t field_width;
     int32_t field_height;
 
     void MakeEat(Eat& eat);
     void MakeSnake(Snake& object);
-    Direction MakeRandomDir();
 };
 
 template<typename T>

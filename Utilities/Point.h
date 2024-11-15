@@ -8,6 +8,7 @@
 struct Point
 {
     Point() : x(0), y(0) {}
+    Point(const Point& other) {x = other.x; y = other.y;}
     Point(const int32_t x, const int32_t y) : x(x), y(y) {}
 
     int32_t x;
