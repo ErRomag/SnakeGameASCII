@@ -5,7 +5,8 @@ CollisionChecker::CollisionChecker()
 
 }
 
-bool CollisionChecker::HasBorderCollision(const Point &point, const int32_t width, const int32_t height)
+bool CollisionChecker::HasBorderCollision(const Point &point,
+                                          const int32_t width, const int32_t height) noexcept
 {
     if((point.x < 0) || (point.y < 0)){
         return true;
@@ -17,7 +18,8 @@ bool CollisionChecker::HasBorderCollision(const Point &point, const int32_t widt
     return false;
 }
 
-bool CollisionChecker::HasBorderCollision(const Coordinates &coord, const int32_t width, const int32_t height)
+bool CollisionChecker::HasBorderCollision(const Coordinates &coord,
+                                          const int32_t width, const int32_t height) noexcept
 {
     for(const Point& coord : coord) {
         if(HasBorderCollision(coord, width, height)) {
@@ -27,12 +29,12 @@ bool CollisionChecker::HasBorderCollision(const Coordinates &coord, const int32_
     return false;
 }
 
-bool CollisionChecker::HasObjectsCollision(const Point &lhs, const Point &rhs)
+bool CollisionChecker::HasObjectsCollision(const Point &lhs, const Point &rhs) noexcept
 {
-    return lhs.x == rhs.x && lhs.y == rhs.y ? true : false;
+    return (lhs.x == rhs.x && lhs.y == rhs.y) ? true : false;
 }
 
-bool CollisionChecker::HasObjectsCollision(const Coordinates &lhs, const Point &rhs)
+bool CollisionChecker::HasObjectsCollision(const Coordinates &lhs, const Point &rhs) noexcept
 {
     for(const Point& point: lhs) {
         if(HasObjectsCollision(point, rhs)){
@@ -42,7 +44,7 @@ bool CollisionChecker::HasObjectsCollision(const Coordinates &lhs, const Point &
     return false;
 }
 
-bool CollisionChecker::HasObjectsCollision(const Coordinates &lhs, const Coordinates &rhs)
+bool CollisionChecker::HasObjectsCollision(const Coordinates &lhs, const Coordinates &rhs) noexcept
 {
     for(const Point& coord_lhs : lhs) {
         for(const Point& coord_rhs : rhs) {

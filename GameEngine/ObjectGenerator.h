@@ -1,6 +1,7 @@
 #ifndef OBJECTGENERATOR_H
 #define OBJECTGENERATOR_H
 
+#include <random>
 #include <type_traits>
 
 #include "GameObject/Eat.h"
@@ -19,11 +20,13 @@ public:
     template<typename T>
     void CreateObject(AbsObject<T>& object);
 
-    Direction MakeRandomDir();
+    Direction MakeRandomDir() noexcept;
 
 private:
     int32_t field_width;
     int32_t field_height;
+    std::default_random_engine generator;
+    std::random_device rd;
 
     void MakeEat(Eat& eat);
     void MakeSnake(Snake& object);
@@ -36,7 +39,8 @@ void ObjectGenerator::CreateObject(AbsObject<T> &object)
         MakeEat(dynamic_cast<Eat&>(object));
         return;
     }
-    else if(std::is_same<T, Coordinates>::value) {
+
+    if(std::is_same<T, Coordinates>::value) {
         MakeSnake(dynamic_cast<Snake&>(object));
         return;
     }

@@ -15,11 +15,11 @@ public:
 
     virtual ~AbsObject() {}
 
-    char Symbol() const noexcept{
+    char Symbol() const noexcept {
         return _symbol;
     }
 
-    void SetPosition(const T& position){
+    void SetPosition(const T& position) noexcept {
         _position = position;
     }
 

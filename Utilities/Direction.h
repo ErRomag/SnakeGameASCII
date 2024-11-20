@@ -1,7 +1,6 @@
 #ifndef DIRECTION_H
 #define DIRECTION_H
 
-#include <string>
 #include <vector>
 #include <stdexcept>
 
